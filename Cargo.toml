@@ -1,0 +1,37 @@
+[package]
+name = "rust-crud-api"
+version = "0.1.0"
+edition = "2024"
+autor = "hguerrero"
+
+[dependencies]
+axum = "0.8.8"
+tokio = { version = "1.49.0", features = ["full"] }
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["trace", "compression-gzip", "compression-br"] }
+rand = {version = "0.10.0", features = ["std"]}
+
+# DB
+sqlx = { version = "0.8.6", features = [
+  "mysql",
+  "runtime-tokio",
+  "macros",
+  "chrono",
+  "uuid"
+] }
+
+# Config
+dotenvy = "0.15"
+
+# Utils
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.8", features = ["serde", "v4"] }
+
+# Logging (muy recomendado)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+argon2 = "0.5"
+rand_core = "0.6"
