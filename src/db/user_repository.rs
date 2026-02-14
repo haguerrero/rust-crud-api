@@ -43,17 +43,23 @@ pub async fn create_user(
     .execute(pool)
     .await;
 
-    if let Err(err) = result {
+if let Err(err) = result {
     match err {
         sqlx::Error::Database(db_err) => {
-            if db_err.code().as_deref() == Some("1062") {
-                return Err(ApiError::EmailAlreadyExists);
+
+            // Intentamos convertir al tipo MySQL real
+            if let Some(mysql_err) = db_err.try_downcast_ref::<sqlx::mysql::MySqlDatabaseError>() {
+                if mysql_err.number() == 1062 {
+                    return Err(ApiError::EmailAlreadyExists);
+                }
             }
-            return Err(ApiError::InternalServerError);
+
+            Err(ApiError::InternalServerError)
         }
-        _ => return Err(ApiError::InternalServerError),
-    }
+        _ => Err(ApiError::InternalServerError),
+    }?
 }
+
 
  let row = sqlx::query!(
         r#"
