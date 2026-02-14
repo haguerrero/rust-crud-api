@@ -12,6 +12,8 @@ use sqlx::MySqlPool;
 use std::time::Instant;
 
 use crate::db::user_repository;
+use axum::response::IntoResponse;
+use crate::errors::api_error::ApiError;
 
 #[derive(Deserialize)]
 pub struct Pagination {
@@ -45,8 +47,6 @@ pub async fn get_users(
     println!("SQL query time: {:?}", sql_duration);
     println!("User response time: {:?}", user_duration);
 
-    json;
-
     let users = user_repository::get_users(
         &pool, 
         params.limit, 
@@ -61,13 +61,11 @@ pub async fn get_users(
 pub async fn create_user(
     State(pool): State<MySqlPool>,
     Json(payload): Json<CreateUser>,
-) -> Result<Json<UserResponse>, StatusCode> {
+) -> Result<impl IntoResponse, ApiError> {
 
-    match user_repository::create_user(&pool, payload).await {
-        Ok(user) => Ok(Json(user)),
-        Err(sqlx::Error::RowNotFound) => Err(StatusCode::CONFLICT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    let user = user_repository::create_user(&pool, payload).await?;
+
+    Ok((StatusCode::CREATED, Json(user)))
 }
 
 // pub async fn get_users(

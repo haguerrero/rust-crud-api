@@ -76,6 +76,7 @@ mod handlers;
 mod models;
 mod routes;
 mod seed;
+mod errors;
 
 #[tokio::main]
 async fn main() {
