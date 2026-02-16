@@ -8,6 +8,7 @@ use uuid::Uuid;
 use rand_core::OsRng;
 use crate::errors::api_error::ApiError;
 use sqlx::error::DatabaseError;
+use crate::models::user::UserAuth;
 
 use crate::models::user::{UserResponse, CreateUser};
 
@@ -148,4 +149,28 @@ pub async fn get_users(
     };
 
     Ok(users)
+}
+
+pub async fn get_user_by_email(
+    pool: &MySqlPool,
+    email: &str,
+) -> Result<Option<UserAuth>, ApiError> {
+    
+    let user = sqlx::query_as::<_, UserAuth>(
+        r#"
+        SELECT id, email, password_hash
+        FROM users
+        WHERE email = ?
+        LIMIT 1
+        "#,
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        println!("Database error: {:?}", e);
+        ApiError::InternalServerError
+    })?;
+
+    Ok(user)
 }

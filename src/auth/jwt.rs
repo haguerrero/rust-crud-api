@@ -1,0 +1,1 @@
+pub fn generate_token(user_id: &[u8]) -> Result<String, ApiError>

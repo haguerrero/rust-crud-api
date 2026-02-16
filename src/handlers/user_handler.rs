@@ -3,7 +3,7 @@ use axum::{
     Json,
     http::StatusCode
 };
-// use serde_json::json;
+
 use crate::models::user::CreateUser;
 use crate::models::user::UserResponse;
 use serde::Deserialize;
@@ -14,6 +14,9 @@ use std::time::Instant;
 use crate::db::user_repository;
 use axum::response::IntoResponse;
 use crate::errors::api_error::ApiError;
+
+use crate::models::user::{LoginRequest, AuthResponse};
+use crate::services::auth_service;
 
 #[derive(Deserialize)]
 pub struct Pagination {
@@ -67,6 +70,18 @@ pub async fn create_user(
 
     Ok((StatusCode::CREATED, Json(user)))
 }
+
+#[axum::debug_handler]
+pub async fn login(
+    State(pool): State<MySqlPool>,
+    Json(payload): Json<LoginRequest>,
+) -> Result<Json<AuthResponse>, ApiError> {
+
+    let response = auth_service::login(&pool, payload).await?;
+
+    Ok(Json(response))
+}
+
 
 // pub async fn get_users(
 //     State(pool): State<MySqlPool>,

@@ -10,6 +10,7 @@ pub fn create_router(pool: MySqlPool) -> Router {
         .route("/health", get(health::health))
         .route("/users", get(user_handler::get_users))
         .route("/users", post(user_handler::create_user))
+        .route("/auth/login", post(user_handler::login))
         .layer(CompressionLayer::new())
         .with_state(pool)
 }
