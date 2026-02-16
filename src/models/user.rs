@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
@@ -17,7 +18,7 @@ pub struct CreateUser {
 
 #[derive(Debug, FromRow)]
 pub struct UserAuth {
-    pub id: String,
+    pub id: Uuid,
     pub email: String,
     pub password_hash: String,
 }

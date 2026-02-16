@@ -156,15 +156,19 @@ pub async fn get_user_by_email(
     email: &str,
 ) -> Result<Option<UserAuth>, ApiError> {
     
-    let user = sqlx::query_as::<_, UserAuth>(
+    let user = sqlx::query_as!(
+        UserAuth,
         r#"
-        SELECT id, email, password_hash
+        SELECT 
+            id as `id:Uuid`, 
+            email, 
+            password_hash
         FROM users
         WHERE email = ?
         LIMIT 1
         "#,
+        email
     )
-    .bind(email)
     .fetch_optional(pool)
     .await
     .map_err(|e| {
