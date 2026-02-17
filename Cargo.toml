@@ -37,3 +37,5 @@ argon2 = "0.5"
 rand_core = "0.6"
 
 jsonwebtoken = "9"
+
+async-trait = "0.1"

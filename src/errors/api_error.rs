@@ -12,6 +12,7 @@ pub enum ApiError {
     BadRequest(String),
     InternalServerError,
     InvalidCredentials,
+    Unauthorized,
 }
 
 #[derive(Serialize)]
@@ -33,6 +34,7 @@ impl IntoResponse for ApiError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
             ),
+            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
         };
 
         let body = Json(ErrorResponse { error: message });
