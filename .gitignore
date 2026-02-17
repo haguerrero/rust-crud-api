@@ -1,3 +1,36 @@
-/target
+# Directorio de compilación
+/target/
+
+# Variables de entorno
 .env
+.env.*
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Continue (asistente de IA)
+.continue/
+
+# Rust específico
+**/*.rs.bk
+*.pdb
+
+# Cargo
 Cargo.lock
+
+# Logs
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+tmp/
+temp/
+

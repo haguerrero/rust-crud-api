@@ -20,7 +20,7 @@
 //     let user = user_repository::create_user(&pool, payload)
 //         .await
 //         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    
+
 //     Ok(Json(user))
 // }
 
@@ -30,7 +30,7 @@
 //     let users = user_repository::get_users(&pool)
 //         .await
 //         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    
+
 //     Ok(Json(users))
 // }
 

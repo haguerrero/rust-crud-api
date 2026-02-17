@@ -1,7 +1,7 @@
 use axum::{
-    extract::{State, Query}, 
     Json,
-    http::StatusCode
+    extract::{Query, State},
+    http::StatusCode,
 };
 
 use crate::models::user::CreateUser;
@@ -12,10 +12,10 @@ use sqlx::MySqlPool;
 use std::time::Instant;
 
 use crate::db::user_repository;
-use axum::response::IntoResponse;
 use crate::errors::api_error::ApiError;
+use axum::response::IntoResponse;
 
-use crate::models::user::{LoginRequest, AuthResponse};
+use crate::models::user::{AuthResponse, LoginRequest};
 use crate::services::auth_service;
 
 #[derive(Deserialize)]
@@ -28,19 +28,14 @@ pub async fn get_users(
     State(pool): State<MySqlPool>,
     Query(params): Query<Pagination>,
 ) -> Json<Vec<crate::models::user::UserResponse>> {
-    
     let limit = params.limit.unwrap_or(10000);
     let offset = params.offset.unwrap_or(0);
-    
+
     // Measure SQL query time
     let sql_start = Instant::now();
-    let users = user_repository::get_users(
-        &pool, 
-        Some(limit), 
-        Some(offset)
-    )
-    .await
-    .expect("Failed to fetch users");
+    let users = user_repository::get_users(&pool, Some(limit), Some(offset))
+        .await
+        .expect("Failed to fetch users");
     let sql_duration = sql_start.elapsed();
 
     let user_start = Instant::now();
@@ -50,13 +45,9 @@ pub async fn get_users(
     println!("SQL query time: {:?}", sql_duration);
     println!("User response time: {:?}", user_duration);
 
-    let users = user_repository::get_users(
-        &pool, 
-        params.limit, 
-        params.offset
-    )
-    .await
-    .expect("Failed to fetch users");
+    let users = user_repository::get_users(&pool, params.limit, params.offset)
+        .await
+        .expect("Failed to fetch users");
 
     Json(users)
 }
@@ -65,7 +56,6 @@ pub async fn create_user(
     State(pool): State<MySqlPool>,
     Json(payload): Json<CreateUser>,
 ) -> Result<impl IntoResponse, ApiError> {
-
     let user = user_repository::create_user(&pool, payload).await?;
 
     Ok((StatusCode::CREATED, Json(user)))
@@ -76,12 +66,10 @@ pub async fn login(
     State(pool): State<MySqlPool>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
-
     let response = auth_service::login(&pool, payload).await?;
 
     Ok(Json(response))
 }
-
 
 // pub async fn get_users(
 //     State(pool): State<MySqlPool>,
@@ -92,4 +80,3 @@ pub async fn login(
 
 //     Json(users)
 // }
-

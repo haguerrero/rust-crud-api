@@ -1,15 +1,13 @@
+use rand::RngExt;
 use sqlx::MySqlPool;
 use uuid::Uuid;
-use rand::RngExt;
 
 pub async fn seed_db(pool: &MySqlPool) {
     println!("🌱 Starting seed process...");
 
     let mut rng = rand::rng();
 
-    let mut tx = pool.begin()
-        .await
-        .expect("Failed to start transaction");
+    let mut tx = pool.begin().await.expect("Failed to start transaction");
 
     for i in 0..10_000 {
         // UUID v4 → BINARY(16)
@@ -26,7 +24,7 @@ pub async fn seed_db(pool: &MySqlPool) {
             r#"
             INSERT INTO users (id, email, password_hash)
             VALUES (?, ?, ?)
-            "#
+            "#,
         )
         .bind(&id[..])
         .bind(&email)
@@ -36,9 +34,7 @@ pub async fn seed_db(pool: &MySqlPool) {
         .expect("Failed to insert user");
     }
 
-    tx.commit()
-        .await
-        .expect("Failed to commit transaction");
+    tx.commit().await.expect("Failed to commit transaction");
 
     println!("✅ Seed completed!");
 }

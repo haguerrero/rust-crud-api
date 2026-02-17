@@ -9,8 +9,7 @@ impl Config {
     pub fn from_env() -> Self {
         dotenv().ok();
 
-        let database_url = env::var("DATABASE_URL")
-            .expect("DATABASE_URL not set");
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
 
         Self { database_url }
     }

@@ -1,22 +1,17 @@
-
-use argon2::{
-    password_hash::{PasswordHasher, SaltString},
-    Argon2
-};
-use sqlx::MySqlPool;
-use uuid::Uuid;
-use rand_core::OsRng;
 use crate::errors::api_error::ApiError;
-use sqlx::error::DatabaseError;
 use crate::models::user::UserAuth;
+use argon2::{
+    Argon2,
+    password_hash::{PasswordHasher, SaltString},
+};
+use rand_core::OsRng;
+use sqlx::MySqlPool;
+use sqlx::error::DatabaseError;
+use uuid::Uuid;
 
-use crate::models::user::{UserResponse, CreateUser};
+use crate::models::user::{CreateUser, UserResponse};
 
-pub async fn create_user(
-    pool: &MySqlPool,
-    payload: CreateUser,
-) -> Result<UserResponse, ApiError> {
-    
+pub async fn create_user(pool: &MySqlPool, payload: CreateUser) -> Result<UserResponse, ApiError> {
     if payload.email.trim().is_empty() || payload.password.len() < 6 {
         return Err(ApiError::BadRequest("Invalid email or password".into()));
     }
@@ -25,7 +20,7 @@ pub async fn create_user(
     let user_id = Uuid::new_v4();
     let argon2 = Argon2::default();
     let salt = SaltString::generate(&mut OsRng);
-    
+
     let password_hash = argon2
         .hash_password(payload.password.as_bytes(), &salt)
         .map_err(|_| ApiError::InternalServerError)?
@@ -44,25 +39,25 @@ pub async fn create_user(
     .execute(pool)
     .await;
 
-if let Err(err) = result {
-    match err {
-        sqlx::Error::Database(db_err) => {
-
-            // Intentamos convertir al tipo MySQL real
-            if let Some(mysql_err) = db_err.try_downcast_ref::<sqlx::mysql::MySqlDatabaseError>() {
-                if mysql_err.number() == 1062 {
-                    return Err(ApiError::EmailAlreadyExists);
+    if let Err(err) = result {
+        match err {
+            sqlx::Error::Database(db_err) => {
+                // Intentamos convertir al tipo MySQL real
+                if let Some(mysql_err) =
+                    db_err.try_downcast_ref::<sqlx::mysql::MySqlDatabaseError>()
+                {
+                    if mysql_err.number() == 1062 {
+                        return Err(ApiError::EmailAlreadyExists);
+                    }
                 }
+
+                Err(ApiError::InternalServerError)
             }
+            _ => Err(ApiError::InternalServerError),
+        }?
+    }
 
-            Err(ApiError::InternalServerError)
-        }
-        _ => Err(ApiError::InternalServerError),
-    }?
-}
-
-
- let row = sqlx::query!(
+    let row = sqlx::query!(
         r#"
         SELECT id, email, created_at
         FROM users
@@ -86,7 +81,6 @@ pub async fn get_users(
     limit: Option<i64>,
     offset: Option<i64>,
 ) -> Result<Vec<UserResponse>, sqlx::Error> {
-
     let users = if let Some(limit) = limit {
         let offset = offset.unwrap_or(0);
 
@@ -108,8 +102,7 @@ pub async fn get_users(
 
         rows.into_iter()
             .map(|row| {
-                let uuid = Uuid::from_slice(&row.id)
-                    .expect("Invalid UUID id database");
+                let uuid = Uuid::from_slice(&row.id).expect("Invalid UUID id database");
 
                 UserResponse {
                     id: uuid.to_string(),
@@ -118,9 +111,7 @@ pub async fn get_users(
                 }
             })
             .collect()
-
     } else {
-
         let rows = sqlx::query!(
             r#"
             SELECT 
@@ -136,8 +127,7 @@ pub async fn get_users(
 
         rows.into_iter()
             .map(|row| {
-                let uuid = Uuid::from_slice(&row.id)
-                    .expect("Invalid UUID id database");
+                let uuid = Uuid::from_slice(&row.id).expect("Invalid UUID id database");
 
                 UserResponse {
                     id: uuid.to_string(),
@@ -155,7 +145,6 @@ pub async fn get_user_by_email(
     pool: &MySqlPool,
     email: &str,
 ) -> Result<Option<UserAuth>, ApiError> {
-    
     let user = sqlx::query_as!(
         UserAuth,
         r#"

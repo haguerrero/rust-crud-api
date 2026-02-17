@@ -4,19 +4,19 @@ use std::env;
 
 mod config;
 mod db;
+mod errors;
 mod handlers;
 mod models;
 mod routes;
+mod security;
 mod seed;
-mod errors;
 mod services;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL not set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
 
     let pool = db::mysql::create_pool(&database_url).await;
 
@@ -35,8 +35,5 @@ async fn main() {
 
     println!("🚀 Server running on http://0.0.0.0:3000");
 
-    axum::serve(listener, app)
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
-
