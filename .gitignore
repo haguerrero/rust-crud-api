@@ -14,6 +14,7 @@
 
 # Continue (asistente de IA)
 .continue/
+.claude
 
 # Rust específico
 **/*.rs.bk
