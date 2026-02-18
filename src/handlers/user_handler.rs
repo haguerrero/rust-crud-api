@@ -4,8 +4,13 @@ use axum::{
     http::StatusCode,
 };
 
-use crate::models::user::CreateUser;
-use crate::models::user::UserResponse;
+use crate::models::user::{
+    CreateUser, 
+    UserResponse,
+    AuthResponse,
+    LoginRequest
+};
+
 use serde::Deserialize;
 use sqlx::MySqlPool;
 
@@ -14,8 +19,8 @@ use std::time::Instant;
 use crate::db::user_repository;
 use crate::errors::api_error::ApiError;
 use axum::response::IntoResponse;
+use crate::middleware::auth::AuthenticatedUser;
 
-use crate::models::user::{AuthResponse, LoginRequest};
 use crate::services::auth_service;
 
 #[derive(Deserialize)]
@@ -26,30 +31,21 @@ pub struct Pagination {
 
 pub async fn get_users(
     State(pool): State<MySqlPool>,
+    AuthenticatedUser(_claims): AuthenticatedUser,
     Query(params): Query<Pagination>,
-) -> Json<Vec<crate::models::user::UserResponse>> {
+) -> Result<Json<Vec<UserResponse>>, ApiError> {
     let limit = params.limit.unwrap_or(10000);
     let offset = params.offset.unwrap_or(0);
 
-    // Measure SQL query time
     let sql_start = Instant::now();
     let users = user_repository::get_users(&pool, Some(limit), Some(offset))
         .await
-        .expect("Failed to fetch users");
+        .map_err(|_| ApiError::InternalServerError)?;
     let sql_duration = sql_start.elapsed();
 
-    let user_start = Instant::now();
-    let json = Json(users);
-    let user_duration = user_start.elapsed();
-
     println!("SQL query time: {:?}", sql_duration);
-    println!("User response time: {:?}", user_duration);
 
-    let users = user_repository::get_users(&pool, params.limit, params.offset)
-        .await
-        .expect("Failed to fetch users");
-
-    Json(users)
+    Ok(Json(users))
 }
 
 pub async fn create_user(
@@ -70,13 +66,3 @@ pub async fn login(
 
     Ok(Json(response))
 }
-
-// pub async fn get_users(
-//     State(pool): State<MySqlPool>,
-// ) -> Json<Vec<User>> {
-//     let users = user_repository::get_users(&pool)
-//         .await
-//         .unwrap();
-
-//     Json(users)
-// }
