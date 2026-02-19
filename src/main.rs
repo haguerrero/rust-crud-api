@@ -12,6 +12,8 @@ mod routes;
 mod security;
 mod seed;
 mod services;
+mod graphql;
+
 
 #[tokio::main]
 async fn main() {

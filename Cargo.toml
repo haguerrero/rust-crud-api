@@ -39,3 +39,6 @@ rand_core = "0.6"
 jsonwebtoken = "9"
 
 async-trait = "0.1"
+
+async-graphql = "7"
+async-graphql-axum = "7"

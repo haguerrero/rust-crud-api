@@ -103,3 +103,4 @@ pub async fn delete_user(
 
     Ok(StatusCode::NO_CONTENT)
 }
+
