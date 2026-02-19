@@ -33,3 +33,8 @@ pub struct LoginRequest {
 pub struct AuthResponse {
     pub token: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct GetUserByEmailQuery {
+    pub email: String,
+}

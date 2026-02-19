@@ -8,7 +8,8 @@ use crate::models::user::{
     CreateUser, 
     UserResponse,
     AuthResponse,
-    LoginRequest
+    LoginRequest,
+    GetUserByEmailQuery
 };
 
 use serde::Deserialize;
@@ -41,11 +42,24 @@ pub async fn get_users(
     let users = user_repository::get_users(&pool, Some(limit), Some(offset))
         .await
         .map_err(|_| ApiError::InternalServerError)?;
+
     let sql_duration = sql_start.elapsed();
 
     println!("SQL query time: {:?}", sql_duration);
 
     Ok(Json(users))
+}
+
+pub async fn get_user_by_email(
+    State(pool): State<MySqlPool>,
+    AuthenticatedUser(_claims): AuthenticatedUser,
+    Query(params): Query<GetUserByEmailQuery>,
+) -> Result<Json<UserResponse>, ApiError> {
+    let email = params.email;
+    let user = user_repository::find_user_by_email(&pool, &email)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    Ok(Json(user))
 }
 
 pub async fn create_user(
@@ -57,6 +71,18 @@ pub async fn create_user(
     Ok((StatusCode::CREATED, Json(user)))
 }
 
+pub async fn update_user(
+    State(pool): State<MySqlPool>,
+    AuthenticatedUser(_claims): AuthenticatedUser,
+    Query(params): Query<GetUserByEmailQuery>,
+    Json(payload): Json<CreateUser>,
+) -> Result<Json<UserResponse>, ApiError> {
+    let email = params.email;
+    let user = user_repository::update_user(&pool, &email, &payload.email).await?;
+
+    Ok(Json(user))
+}
+
 #[axum::debug_handler]
 pub async fn login(
     State(pool): State<MySqlPool>,
@@ -65,4 +91,15 @@ pub async fn login(
     let response = auth_service::login(&pool, payload).await?;
 
     Ok(Json(response))
+}
+
+pub async fn delete_user(
+    State(pool): State<MySqlPool>,
+    AuthenticatedUser(_claims): AuthenticatedUser,
+    Query(params): Query<GetUserByEmailQuery>,
+) -> Result<impl IntoResponse, ApiError> {
+    let email = params.email;
+    user_repository::delete_user(&pool, &email).await?;
+
+    Ok(StatusCode::NO_CONTENT)
 }

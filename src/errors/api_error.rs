@@ -13,6 +13,7 @@ pub enum ApiError {
     InternalServerError,
     InvalidCredentials,
     Unauthorized,
+    NotFound,
 }
 
 #[derive(Serialize)]
@@ -34,6 +35,7 @@ impl IntoResponse for ApiError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
             ),
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "Resource not found".to_string()),
             ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
         };
 

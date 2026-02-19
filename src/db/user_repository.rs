@@ -140,7 +140,7 @@ pub async fn get_users(
 
     Ok(users)
 }
-
+// User for login.
 pub async fn get_user_by_email(
     pool: &MySqlPool,
     email: &str,
@@ -148,9 +148,9 @@ pub async fn get_user_by_email(
     let user = sqlx::query_as!(
         UserAuth,
         r#"
-        SELECT 
-            id as `id:Uuid`, 
-            email, 
+        SELECT
+            id as `id:Uuid`,
+            email,
             password_hash
         FROM users
         WHERE email = ?
@@ -166,4 +166,108 @@ pub async fn get_user_by_email(
     })?;
 
     Ok(user)
+}
+
+pub async fn find_user_by_email(
+    pool: &MySqlPool,
+    email: &str,
+) -> Result<Option<UserResponse>, ApiError> {
+    let row = sqlx::query!(
+        r#"
+        SELECT
+            id,
+            email,
+            created_at
+        FROM users
+        WHERE email = ?
+        LIMIT 1
+        "#,
+        email
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        println!("Database error: {:?}", e);
+        ApiError::InternalServerError
+    })?;
+
+    Ok(row.map(|r| {
+        let uuid = Uuid::from_slice(&r.id).expect("Invalid UUID in database");
+        UserResponse {
+            id: uuid.to_string(),
+            email: r.email,
+            created_at: r.created_at,
+        }
+    }))
+}
+
+pub async fn update_user(
+    pool: &MySqlPool,
+    current_email: &str,
+    new_email: &str,
+) -> Result<UserResponse, ApiError> {
+    let result = sqlx::query!(
+        r#"
+        UPDATE users
+        SET email = ?
+        WHERE email = ?
+        "#,
+        new_email,
+        current_email,
+    )
+    .execute(pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() == 0 => return Err(ApiError::NotFound),
+        Err(sqlx::Error::Database(db_err)) => {
+            if let Some(mysql_err) =
+                db_err.try_downcast_ref::<sqlx::mysql::MySqlDatabaseError>()
+            {
+                if mysql_err.number() == 1062 {
+                    return Err(ApiError::EmailAlreadyExists);
+                }
+            }
+            return Err(ApiError::InternalServerError);
+        }
+        Err(_) => return Err(ApiError::InternalServerError),
+        Ok(_) => {}
+    }
+
+    let row = sqlx::query!(
+        r#"
+        SELECT id, email, created_at
+        FROM users
+        WHERE email = ?
+        "#,
+        new_email,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|_| ApiError::InternalServerError)?;
+
+    Ok(UserResponse {
+        id: Uuid::from_slice(&row.id).unwrap().to_string(),
+        email: row.email,
+        created_at: row.created_at,
+    })
+}
+
+pub async fn delete_user(pool: &MySqlPool, email: &str) -> Result<(), ApiError> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM users
+        WHERE email = ?
+        "#,
+        email
+    )
+    .execute(pool)
+    .await
+    .map_err(|_| ApiError::InternalServerError)?;
+
+    if result.rows_affected() == 0 {
+        return Err(ApiError::NotFound);
+    }
+
+    Ok(())
 }
