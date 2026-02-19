@@ -13,12 +13,12 @@ use crate::handlers::user_handler;
 use async_graphql_axum::{GraphQL, GraphQLRequest, GraphQLResponse};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use crate::graphql::schema::{create_schema, AppSchema};
-
-
+use crate::services::user_service::UserService;
 
 pub fn create_router(pool: MySqlPool) -> Router {
-    let schema = create_schema();
-
+    let user_service = UserService::new(pool.clone());
+    let schema = create_schema(user_service);
+    
     Router::new()
         .route("/health", get(health::health))
         .route("/users", get(user_handler::get_users))

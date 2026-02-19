@@ -21,6 +21,20 @@ struct ErrorResponse {
     error: String,
 }
 
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let msg = match self {
+            ApiError::EmailAlreadyExists => "Email already exists".to_string(),
+            ApiError::BadRequest(msg) => msg.clone(),
+            ApiError::InternalServerError => "Internal server error".to_string(),
+            ApiError::InvalidCredentials => "Invalid credentials".to_string(),
+            ApiError::Unauthorized => "Unauthorized".to_string(),
+            ApiError::NotFound => "Resource not found".to_string(),
+        };
+        write!(f, "{}", msg)
+    }
+}
+
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, message) = match self {

@@ -2,8 +2,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
+use async_graphql::SimpleObject;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, SimpleObject)]
 pub struct UserResponse {
     pub id: String,
     pub email: String,

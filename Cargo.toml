@@ -40,5 +40,5 @@ jsonwebtoken = "9"
 
 async-trait = "0.1"
 
-async-graphql = "7"
+async-graphql = { version = "7", features = ["chrono"] }
 async-graphql-axum = "7"
