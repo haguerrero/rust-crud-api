@@ -13,6 +13,9 @@ mod security;
 mod seed;
 mod services;
 mod graphql;
+mod state;
+
+pub use state::AppState;
 
 
 #[tokio::main]

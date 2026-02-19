@@ -23,6 +23,7 @@ use axum::response::IntoResponse;
 use crate::middleware::auth::AuthenticatedUser;
 
 use crate::services::auth_service;
+use crate::AppState;
 
 #[derive(Deserialize)]
 pub struct Pagination {
@@ -31,7 +32,7 @@ pub struct Pagination {
 }
 
 pub async fn get_users(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     AuthenticatedUser(_claims): AuthenticatedUser,
     Query(params): Query<Pagination>,
 ) -> Result<Json<Vec<UserResponse>>, ApiError> {
@@ -39,7 +40,7 @@ pub async fn get_users(
     let offset = params.offset.unwrap_or(0);
 
     let sql_start = Instant::now();
-    let users = user_repository::get_users(&pool, Some(limit), Some(offset))
+    let users = user_repository::get_users(&state.pool, Some(limit), Some(offset))
         .await
         .map_err(|_| ApiError::InternalServerError)?;
 
@@ -51,55 +52,55 @@ pub async fn get_users(
 }
 
 pub async fn get_user_by_email(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     AuthenticatedUser(_claims): AuthenticatedUser,
     Query(params): Query<GetUserByEmailQuery>,
 ) -> Result<Json<UserResponse>, ApiError> {
     let email = params.email;
-    let user = user_repository::find_user_by_email(&pool, &email)
+    let user = user_repository::find_user_by_email(&state.pool, &email)
         .await?
         .ok_or(ApiError::NotFound)?;
     Ok(Json(user))
 }
 
 pub async fn create_user(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     Json(payload): Json<CreateUser>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let user = user_repository::create_user(&pool, payload).await?;
+    let user = user_repository::create_user(&state.pool, payload).await?;
 
     Ok((StatusCode::CREATED, Json(user)))
 }
 
 pub async fn update_user(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     AuthenticatedUser(_claims): AuthenticatedUser,
     Query(params): Query<GetUserByEmailQuery>,
     Json(payload): Json<CreateUser>,
 ) -> Result<Json<UserResponse>, ApiError> {
     let email = params.email;
-    let user = user_repository::update_user(&pool, &email, &payload.email).await?;
+    let user = user_repository::update_user(&state.pool, &email, &payload.email).await?;
 
     Ok(Json(user))
 }
 
 #[axum::debug_handler]
 pub async fn login(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
-    let response = auth_service::login(&pool, payload).await?;
+    let response = auth_service::login(&state.pool, payload).await?;
 
     Ok(Json(response))
 }
 
 pub async fn delete_user(
-    State(pool): State<MySqlPool>,
+    State(state): State<AppState>,
     AuthenticatedUser(_claims): AuthenticatedUser,
     Query(params): Query<GetUserByEmailQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
     let email = params.email;
-    user_repository::delete_user(&pool, &email).await?;
+    user_repository::delete_user(&state.pool, &email).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }
