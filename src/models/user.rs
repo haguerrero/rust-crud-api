@@ -4,10 +4,14 @@ use sqlx::FromRow;
 use uuid::Uuid;
 use async_graphql::SimpleObject;
 
+/// A registered user returned by the API.
 #[derive(Debug, Serialize, SimpleObject)]
 pub struct UserResponse {
+    /// Unique identifier (UUID) of the user.
     pub id: String,
+    /// Email address of the user.
     pub email: String,
+    /// Timestamp when the user was created.
     pub created_at: DateTime<Utc>,
 }
 
@@ -30,8 +34,10 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
+/// Authentication response containing a JWT token.
+#[derive(Debug, Serialize, SimpleObject)]
 pub struct AuthResponse {
+    /// JWT token to use in subsequent requests.
     pub token: String,
 }
 
